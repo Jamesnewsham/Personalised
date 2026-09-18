@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The BBC That Knows You — A Personalisation Strategy for BBC Web</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,450;0,9..144,600;1,9..144,450&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+  :root{
+    --ink:#16181a;
+    --ink-soft:#4b5157;
+    --paper:#efece4;
+    --paper-raised:#f7f5ee;
+    --rule:#d8d3c4;
+    --red:#c8102e;
+    --red-dim:#8f0c21;
+    --blue:#254a7a;
+    --blue-soft:#dde5ef;
+    --green:#4c6b4f;
+    --max:1180px;
+    --serif:'Fraunces', Georgia, serif;
+    --sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:16px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+
+  a{color:inherit;}
+  :focus-visible{outline:2.5px solid var(--red); outline-offset:3px;}
+
+  h1,h2,h3,h4{font-family:var(--serif); font-weight:600; margin:0; letter-spacing:-0.01em;}
+
+  .wrap{max-width:var(--max); margin:0 auto; padding:0 32px;}
+
+  /* ---------- layout shell ---------- */
+  .shell{display:grid; grid-template-columns:248px 1fr; max-width:var(--max); margin:0 auto;}
+  @media (max-width:920px){ .shell{grid-template-columns:1fr;} }
+
+  /* ---------- top bar (mobile) ---------- */
+  .topbar{
+    display:none;
+    position:sticky; top:0; z-index:40;
+    background:var(--paper); border-bottom:1px solid var(--rule);
+    padding:14px 24px; align-items:center; justify-content:space-between;
+  }
+  .topbar strong{font-family:var(--serif); font-size:1.05rem;}
+  .topbar button{
+    background:none; border:1px solid var(--ink); border-radius:0;
+    padding:8px 14px; font-family:var(--sans); font-size:0.85rem; cursor:pointer;
+  }
+  @media (max-width:920px){ .topbar{display:flex;} }
+
+  /* ---------- side nav ---------- */
+  nav.rail{
+    position:sticky; top:0; align-self:start; height:100vh; overflow-y:auto;
+    padding:40px 20px 40px 32px; border-right:1px solid var(--rule);
+  }
+  nav.rail .brand{
+    font-family:var(--serif); font-size:1.05rem; font-weight:600;
+    margin-bottom:6px; line-height:1.3;
+  }
+  nav.rail .brand span{display:block; font-family:var(--sans); font-weight:500; font-size:0.72rem; letter-spacing:0.04em; color:var(--ink-soft); margin-top:6px;}
+  nav.rail ol{list-style:none; margin:28px 0 0; padding:0;}
+  nav.rail ol li{margin:0;}
+  nav.rail ol a{
+    display:flex; gap:10px; align-items:baseline;
+    text-decoration:none; padding:7px 0; font-size:0.87rem; color:var(--ink-soft);
+    border-left:2px solid transparent; padding-left:10px; margin-left:-12px;
+  }
+  nav.rail ol a:hover, nav.rail ol a.active{ color:var(--ink); border-left-color:var(--red); }
+  nav.rail ol a em{font-style:normal; font-variant-numeric:tabular-nums; font-size:0.72rem; color:var(--red); width:20px; flex:none;}
+  nav.rail .divider{height:1px; background:var(--rule); margin:22px -12px 22px 0;}
+  nav.rail .concepts-link{font-weight:600; color:var(--ink);}
+
+  @media (max-width:920px){
+    nav.rail{
+      position:fixed; inset:0 0 0 auto; width:min(320px,84vw); z-index:50;
+      background:var(--paper-raised); transform:translateX(100%); transition:transform 0.28s ease;
+      box-shadow:-8px 0 24px rgba(0,0,0,0.15);
+    }
+    nav.rail.open{transform:translateX(0);}
+  }
+
+  main{min-width:0;}
+
+  /* ---------- hero ---------- */
+  .hero{padding:76px 56px 60px; border-bottom:1px solid var(--rule);}
+  @media (max-width:920px){ .hero{padding:48px 24px 40px;} }
+  .hero .kicker{font-size:0.8rem; color:var(--red); font-weight:600; margin-bottom:18px;}
+  .hero h1{font-size:clamp(2.1rem,4.4vw,3.4rem); line-height:1.08; max-width:15ch;}
+  .hero p.lede{font-size:1.15rem; color:var(--ink-soft); max-width:56ch; margin-top:22px;}
+
+  /* dial demo */
+  .dial-card{
+    margin-top:44px; background:var(--paper-raised); border:1px solid var(--rule);
+    padding:28px 30px; max-width:640px;
+  }
+  .dial-card .dial-label{display:flex; justify-content:space-between; font-size:0.78rem; color:var(--ink-soft); margin-bottom:10px;}
+  .dial-track{position:relative; height:34px; background:var(--rule); overflow:hidden;}
+  .dial-fill-editorial{position:absolute; inset:0 auto 0 0; background:var(--red); width:70%; transition:width 0.15s linear;}
+  .dial-fill-personal{position:absolute; inset:0 0 0 auto; background:var(--blue); width:30%; transition:width 0.15s linear;}
+  input.dial-range{
+    width:100%; margin-top:14px; -webkit-appearance:none; appearance:none;
+    background:transparent; cursor:pointer; height:22px;
+  }
+  input.dial-range::-webkit-slider-runnable-track{ height:3px; background:var(--ink); }
+  input.dial-range::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none; margin-top:-9px;
+    width:21px; height:21px; border-radius:50%; background:var(--ink); border:3px solid var(--paper-raised);
+    box-shadow:0 0 0 1.5px var(--ink);
+  }
+  input.dial-range::-moz-range-track{ height:3px; background:var(--ink); }
+  input.dial-range::-moz-range-thumb{ width:15px; height:15px; border-radius:50%; background:var(--ink); border:3px solid var(--paper-raised); box-shadow:0 0 0 1.5px var(--ink);}
+  .dial-readout{margin-top:14px; font-size:0.92rem;}
+  .dial-readout b{font-family:var(--serif); font-weight:600;}
+  .dial-caption{margin-top:16px; font-size:0.8rem; color:var(--ink-soft); border-top:1px dashed var(--rule); padding-top:14px;}
+
+  /* ---------- sections ---------- */
+  section.doc{padding:64px 56px; border-bottom:1px solid var(--rule);}
+  section.doc:last-of-type{border-bottom:none;}
+  @media (max-width:920px){ section.doc{padding:44px 24px;} }
+
+  .sec-head{display:flex; gap:18px; align-items:baseline; margin-bottom:28px;}
+  .sec-head .num{font-family:var(--serif); font-size:1rem; color:var(--red); font-weight:600; flex:none;}
+  .sec-head h2{font-size:clamp(1.5rem,2.6vw,2rem);}
+
+  .lead-line{font-size:1.05rem; color:var(--ink-soft); max-width:62ch; margin:0 0 30px;}
+
+  /* principle list */
+  .principles{list-style:none; margin:0; padding:0; border-top:1px solid var(--rule);}
+  .principles li{
+    display:grid; grid-template-columns:44px 1fr; gap:20px;
+    padding:22px 0; border-bottom:1px solid var(--rule);
+  }
+  .principles li .p-num{font-family:var(--serif); color:var(--rule); font-size:1.6rem; font-weight:600;}
+  .principles li h3{font-size:1.05rem; margin-bottom:6px;}
+  .principles li p{margin:0; color:var(--ink-soft); font-size:0.95rem; max-width:60ch;}
+
+  /* layer diagram */
+  .layers{display:flex; flex-direction:column; gap:2px; margin:0 0 20px;}
+  .layer{
+    padding:16px 20px; display:grid; grid-template-columns:120px 1fr; gap:18px; align-items:center;
+    font-size:0.92rem;
+  }
+  .layer .l-tag{font-size:0.72rem; font-weight:600; letter-spacing:0.02em;}
+  .layer strong{display:block; font-family:var(--serif); font-size:1rem; font-weight:600; margin-bottom:3px;}
+  .layer-0{background:var(--ink); color:var(--paper-raised);}
+  .layer-0 .l-tag{color:#d6b8be;}
+  .layer-1{background:#e3ddc9;}
+  .layer-2{background:var(--blue-soft);}
+  .layer-3{background:#f0e0c9;}
+  .layer-4{background:var(--paper-raised); border:1px solid var(--rule);}
+
+  /* two-col grid */
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:34px;}
+  @media (max-width:700px){ .grid2{grid-template-columns:1fr;} }
+  .grid2 h4{font-size:0.75rem; text-transform:none; color:var(--red); font-weight:600; margin-bottom:12px;}
+  .grid2 ul{margin:0; padding-left:18px; color:var(--ink-soft); font-size:0.94rem;}
+  .grid2 ul li{margin-bottom:8px;}
+
+  /* card row (features) */
+  .cardrow{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1px; background:var(--rule); border:1px solid var(--rule);}
+  .cardrow .card{background:var(--paper-raised); padding:22px 22px 24px;}
+  .cardrow .card h4{font-family:var(--serif); font-weight:600; font-size:1.02rem; margin-bottom:8px;}
+  .cardrow .card p{margin:0; font-size:0.9rem; color:var(--ink-soft);}
+
+  /* journeys */
+  .journey{border-left:3px solid var(--red); padding:4px 0 4px 22px; margin-bottom:34px;}
+  .journey h4{font-family:var(--serif); font-size:1.08rem; margin-bottom:10px;}
+  .journey ol{margin:0; padding-left:18px; color:var(--ink-soft); font-size:0.94rem;}
+  .journey ol li{margin-bottom:6px;}
+
+  /* risks */
+  .risklist{list-style:none; margin:0; padding:0;}
+  .risklist li{
+    display:grid; grid-template-columns:170px 1fr; gap:20px;
+    padding:16px 0; border-bottom:1px solid var(--rule); font-size:0.92rem;
+  }
+  .risklist li .r-tag{font-weight:600; color:var(--red-dim); font-size:0.85rem;}
+  .risklist li p{margin:0; color:var(--ink-soft);}
+  @media (max-width:640px){ .risklist li{grid-template-columns:1fr;} }
+
+  /* mvp/future split */
+  .split{display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--rule); border:1px solid var(--rule);}
+  @media (max-width:700px){ .split{grid-template-columns:1fr;} }
+  .split > div{background:var(--paper-raised); padding:26px 26px 28px;}
+  .split .tag{font-size:0.72rem; font-weight:700; color:var(--red); margin-bottom:12px;}
+  .split ul{margin:0; padding-left:18px; color:var(--ink-soft); font-size:0.93rem;}
+  .split ul li{margin-bottom:7px;}
+
+  /* ---------- concepts ---------- */
+  .concepts-intro{padding:70px 56px 20px; text-align:left;}
+  @media (max-width:920px){ .concepts-intro{padding:48px 24px 10px;} }
+  .concepts-intro .kicker{font-size:0.8rem; color:var(--red); font-weight:600; margin-bottom:16px;}
+  .concepts-intro h2{font-size:clamp(1.7rem,3.4vw,2.5rem); max-width:20ch;}
+  .concepts-intro p{max-width:60ch; color:var(--ink-soft); margin-top:16px; font-size:1.02rem;}
+
+  .concepts-list{padding:20px 56px 80px;}
+  @media (max-width:920px){ .concepts-list{padding:10px 24px 60px;} }
+
+  .concept{border-top:1px solid var(--rule);}
+  .concept:last-child{border-bottom:1px solid var(--rule);}
+  .concept-btn{
+    width:100%; text-align:left; background:none; border:none; cursor:pointer;
+    padding:24px 4px; display:grid; grid-template-columns:52px 1fr 26px; gap:20px; align-items:center;
+    font-family:inherit; color:inherit;
+  }
+  .concept-btn .c-num{font-family:var(--serif); color:var(--red); font-size:1.1rem; font-weight:600;}
+  .concept-btn .c-name{font-family:var(--serif); font-size:1.2rem; font-weight:600;}
+  .concept-btn .c-idea{display:block; font-family:var(--sans); font-size:0.88rem; color:var(--ink-soft); font-weight:400; margin-top:4px;}
+  .concept-btn .c-plus{font-size:1.4rem; color:var(--ink-soft); transition:transform 0.2s ease; font-family:var(--serif); text-align:center;}
+  .concept[data-open="true"] .c-plus{transform:rotate(45deg);}
+
+  .concept-body{
+    max-height:0; overflow:hidden; transition:max-height 0.32s ease;
+  }
+  .concept-body-inner{padding:4px 4px 34px 72px;}
+  @media (max-width:640px){ .concept-body-inner{padding-left:4px;} }
+
+  .concept-body-inner .row{margin-bottom:18px;}
+  .concept-body-inner .row h5{font-size:0.72rem; font-weight:700; color:var(--red); margin:0 0 6px;}
+  .concept-body-inner .row p, .concept-body-inner .row ul{margin:0; font-size:0.93rem; color:var(--ink-soft);}
+  .concept-body-inner .row ul{padding-left:18px;}
+  .concept-body-inner .why{
+    margin-top:20px; padding:16px 18px; background:var(--blue-soft); font-size:0.9rem; color:var(--blue);
+  }
+  .concept-body-inner .why b{color:var(--ink);}
+
+  /* ---------- footer ---------- */
+  footer{padding:50px 56px 70px; color:var(--ink-soft); font-size:0.86rem;}
+  @media (max-width:920px){ footer{padding:36px 24px 50px;} }
+  footer .rule{height:1px; background:var(--rule); margin-bottom:30px;}
+
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <strong>The BBC That Knows You</strong>
+  <button id="navToggle" aria-expanded="false" aria-controls="railNav">Contents</button>
+</div>
+
+<div class="shell">
+
+  <nav class="rail" id="railNav" aria-label="Document sections">
+    <div class="brand">The BBC That Knows You
+      <span>A PERSONALISATION STRATEGY FOR BBC WEB</span>
+    </div>
+    <ol>
+      <li><a href="#vision"><em>01</em>Product vision</a></li>
+      <li><a href="#principles"><em>02</em>Experience principles</a></li>
+      <li><a href="#ia"><em>03</em>Information architecture</a></li>
+      <li><a href="#model"><em>04</em>Personalisation model</a></li>
+      <li><a href="#discovery"><em>05</em>Discovery experience</a></li>
+      <li><a href="#trust"><em>06</em>Trust features</a></li>
+      <li><a href="#control"><em>07</em>Control features</a></li>
+      <li><a href="#placements"><em>08</em>Placements</a></li>
+      <li><a href="#news"><em>09</em>News experience</a></li>
+      <li><a href="#sport"><em>10</em>Sport experience</a></li>
+      <li><a href="#accessibility"><em>11</em>Accessibility</a></li>
+      <li><a href="#journeys"><em>13</em>User journeys</a></li>
+      <li><a href="#risks"><em>14</em>Risks</a></li>
+      <li><a href="#roadmap"><em>15</em>MVP &amp; future</a></li>
+    </ol>
+    <div class="divider"></div>
+    <ol>
+      <li><a href="#concepts" class="concepts-link">10 concepts →</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <header class="hero">
+      <div class="kicker">BBC WEB · PERSONALISATION STRATEGY</div>
+      <h1>The BBC that knows you, edited by people you trust.</h1>
+      <p class="lede">Personalisation on BBC Web isn't a feed to optimise — it's a relationship built on transparency, editorial judgement and user control. This is what that looks like in practice.</p>
+
+      <div class="dial-card">
+        <div class="dial-label"><span>Editorial priorities</span><span>Your interests</span></div>
+        <div class="dial-track">
+          <div class="dial-fill-editorial" id="fillEd"></div>
+          <div class="dial-fill-personal" id="fillPer"></div>
+        </div>
+        <input type="range" min="0" max="100" value="70" class="dial-range" id="dial" aria-label="Balance between editorial priorities and personal interests">
+        <div class="dial-readout" id="dialReadout"><b>Balanced —</b> mostly what matters today, with room for what matters to you.</div>
+        <div class="dial-caption">Concept 01 — <em>The Editorial Compass</em>. On BBC Web, users can see and move this balance themselves. It never goes to zero editorial.</div>
+      </div>
+    </header>
+
+    <!-- 01 VISION -->
+    <section class="doc" id="vision">
+      <div class="sec-head"><span class="num">01</span><h2>Product vision</h2></div>
+      <p class="lead-line">BBC Web should feel like being guided by a brilliant, well-informed friend who happens to be a senior editor — someone who knows your interests, respects your time, and never lets you miss what matters.</p>
+      <p class="lead-line">The objective is not engagement. It's <strong>trust, comprehension and control</strong>. Every personalised element should make a user feel more informed, never more captured. Where commercial platforms optimise for attention, BBC Web optimises for an informed public — and personalisation is only justified when it serves that mission better than a purely editorial page could.</p>
+    </section>
+
+    <!-- 02 PRINCIPLES -->
+    <section class="doc" id="principles">
+      <div class="sec-head"><span class="num">02</span><h2>Core experience principles</h2></div>
+      <ul class="principles">
+        <li><span class="p-num">1</span><div><h3>Editorial-first, personalisation-second</h3><p>Personalisation reorders and augments; it never replaces editorial curation of what matters most.</p></div></li>
+        <li><span class="p-num">2</span><div><h3>Explainable by design</h3><p>Every recommendation carries a visible "why," written in plain language, not algorithmic jargon.</p></div></li>
+        <li><span class="p-num">3</span><div><h3>Control is ambient, not buried</h3><p>Users can see and adjust personalisation signals wherever they encounter them — not only in a settings page.</p></div></li>
+        <li><span class="p-num">4</span><div><h3>Discovery is structural, not incidental</h3><p>Space for content outside a user's known interests is reserved on principle, not left to an algorithm's afterthought.</p></div></li>
+        <li><span class="p-num">5</span><div><h3>Continuity over novelty</h3><p>The system's first job after any piece of content is answering "what next?" — before it guesses "what else generally?"</p></div></li>
+        <li><span class="p-num">6</span><div><h3>Two publics, one system</h3><p>News users want breadth, perspective and serendipity. Sport users want depth, continuity and team relevance. One architecture, two moods.</p></div></li>
+        <li><span class="p-num">7</span><div><h3>No dark patterns</h3><p>No infinite scroll built to trap, no engagement-bait headlines, no manufactured urgency.</p></div></li>
+      </ul>
+    </section>
+
+    <!-- 03 IA -->
+    <section class="doc" id="ia">
+      <div class="sec-head"><span class="num">03</span><h2>Information architecture</h2></div>
+      <p class="lead-line">A layered model, not a single feed — so a user can always mentally locate <em>why</em> they're seeing something.</p>
+      <div class="layers">
+        <div class="layer layer-0"><div class="l-tag">LAYER 0 · FIXED</div><div><strong>Editorial Spine</strong>Top stories, breaking news, homepage lead — fully editor-controlled, same for every user, always visible.</div></div>
+        <div class="layer layer-1"><div class="l-tag">LAYER 1</div><div><strong>Contextual Continuation</strong>Immediately after any story: follow-up reporting, explainers, opposing viewpoints, live updates.</div></div>
+        <div class="layer layer-2"><div class="l-tag">LAYER 2 · BOUNDED</div><div><strong>For You</strong>Clearly labelled, capped in size, always adjacent to — never replacing — editorial sections.</div></div>
+        <div class="layer layer-3"><div class="l-tag">LAYER 3</div><div><strong>Discovery Zone</strong>An editorially curated "beyond your interests" rail, informed by what you don't usually read.</div></div>
+        <div class="layer layer-4"><div class="l-tag">LAYER 4</div><div><strong>Topic / Team / Competition Hubs</strong>Persistent, followable structures giving personalisation a stable, legible backbone.</div></div>
+      </div>
+    </section>
+
+    <!-- 04 MODEL -->
+    <section class="doc" id="model">
+      <div class="sec-head"><span class="num">04</span><h2>Personalisation model</h2></div>
+      <div class="grid2">
+        <div>
+          <h4>Signals used — all user-visible</h4>
+          <ul>
+            <li>Explicit: followed topics, teams, competitions</li>
+            <li>Implicit-but-legible: recent reads, watches, in-progress stories</li>
+            <li>Contextual: time of day, device, location, live events happening now</li>
+            <li>Editorial overrides: importance scores that can outrank any personal signal</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Design rule</h4>
+          <p style="color:var(--ink-soft); font-size:0.94rem; margin:0 0 16px;">No signal is ever used unless a plain-English explanation exists, and the user can down-weight, mute or reset it within two taps.</p>
+          <h4>Blend logic</h4>
+          <p style="color:var(--ink-soft); font-size:0.94rem; margin:0;">A visible ratio — roughly 70% editorial priority, 20% your interests, 10% discovery — shown as an honest mental model, never as an exact hidden algorithm.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 05 DISCOVERY -->
+    <section class="doc" id="discovery">
+      <div class="sec-head"><span class="num">05</span><h2>Discovery experience</h2></div>
+      <div class="cardrow">
+        <div class="card"><h4>"Something Different"</h4><p>Editorially hand-picked, rotated daily, explicitly framed as outside your usual reading.</p></div>
+        <div class="card"><h4>Serendipity slot</h4><p>After every 3rd–4th personalised recommendation, one deliberately diverse pick, honestly labelled.</p></div>
+        <div class="card"><h4>Topic Explorer</h4><p>A visual map of BBC's full topic breadth, so users can browse structurally, not algorithmically.</p></div>
+        <div class="card"><h4>Perspective pairing</h4><p>For contentious stories, "see this from another angle" as a standing feature, not a one-off.</p></div>
+      </div>
+    </section>
+
+    <!-- 06 TRUST -->
+    <section class="doc" id="trust">
+      <div class="sec-head"><span class="num">06</span><h2>Trust features</h2></div>
+      <div class="cardrow">
+        <div class="card"><h4>"Why am I seeing this?"</h4><p>On every personalised card, one tap reveals the real reason — "You follow Arsenal," "Trending near you."</p></div>
+        <div class="card"><h4>Provenance indicators</h4><p>Clear sourcing for aggregated or live content.</p></div>
+        <div class="card"><h4>Distinct visual language</h4><p>Editorial and personalised content are styled consistently differently, so the layer is always legible at a glance.</p></div>
+        <div class="card"><h4>Your BBC dashboard</h4><p>A transparency report showing what data is used, in human language, updated in real time.</p></div>
+      </div>
+    </section>
+
+    <!-- 07 CONTROL -->
+    <section class="doc" id="control">
+      <div class="sec-head"><span class="num">07</span><h2>Control features</h2></div>
+      <div class="cardrow">
+        <div class="card"><h4>Interest dials</h4><p>"More," "less," "why," "mute this" — available inline on any recommended card, not just settings.</p></div>
+        <div class="card"><h4>Pause &amp; reset</h4><p>One tap to see the standard homepage, and a full personalisation reset.</p></div>
+        <div class="card"><h4>Granular following</h4><p>Follow a team, a topic, a journalist, or a single story thread.</p></div>
+        <div class="card"><h4>Data control</h4><p>View and delete specific signals — "forget that I read about X."</p></div>
+      </div>
+    </section>
+
+    <!-- 08 PLACEMENTS -->
+    <section class="doc" id="placements">
+      <div class="sec-head"><span class="num">08</span><h2>Recommendation placements</h2></div>
+      <div class="grid2">
+        <ul>
+          <li>End of article or video — "Continue your journey"</li>
+          <li>Homepage "For You" module, capped at 4–6 items</li>
+          <li>Section fronts — a small personalised inset within editorial layout</li>
+        </ul>
+        <ul>
+          <li>Search results — personalised ranking hints, editorially bounded</li>
+          <li>Live event pages — personalised team or player callouts</li>
+          <li>Opt-in push / notification digest, with controllable frequency</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 09 NEWS -->
+    <section class="doc" id="news">
+      <div class="sec-head"><span class="num">09</span><h2>News-specific experience</h2></div>
+      <p class="lead-line">Emphasis on breadth and perspective over relevance-matching.</p>
+      <div class="grid2">
+        <ul>
+          <li><strong>Explainer ladder:</strong> headline → explainer → analysis → perspectives, after any breaking story</li>
+          <li>Topic-following with built-in balance — "UK Politics" surfaces a range of viewpoints, never an echo chamber</li>
+        </ul>
+        <ul>
+          <li>Local and national content blended by location, always framed editorially</li>
+          <li>Contentious stories are paired with an alternate perspective by default</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 10 SPORT -->
+    <section class="doc" id="sport">
+      <div class="sec-head"><span class="num">10</span><h2>Sport-specific experience</h2></div>
+      <p class="lead-line">Emphasis on relevance and continuity.</p>
+      <div class="grid2">
+        <ul>
+          <li>Followed-team hub as home base — fixtures, live scores, analysis, deep archive</li>
+          <li>"Continue the story" for ongoing competitions and seasons — a serialised journey, not a one-off feed</li>
+        </ul>
+        <ul>
+          <li>Second-screen live experience — personalised live-text prioritisation for followed teams during matches</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 11 ACCESSIBILITY -->
+    <section class="doc" id="accessibility">
+      <div class="sec-head"><span class="num">11</span><h2>Accessibility considerations</h2></div>
+      <div class="cardrow">
+        <div class="card"><h4>Fully operable controls</h4><p>Every personalisation control works by keyboard and screen reader, with clear labelling for "why am I seeing this."</p></div>
+        <div class="card"><h4>Stable layout</h4><p>No personalisation-driven layout shifts that break navigation for assistive technology users.</p></div>
+        <div class="card"><h4>Plain language</h4><p>No jargon like "algorithmic weighting" — explanations meet WCAG readability standards.</p></div>
+        <div class="card"><h4>Never colour-only</h4><p>Editorial vs. personalised is always marked with an icon and label, never colour alone.</p></div>
+      </div>
+    </section>
+
+    <!-- 13 JOURNEYS -->
+    <section class="doc" id="journeys">
+      <div class="sec-head"><span class="num">13</span><h2>User journeys</h2></div>
+      <div class="journey">
+        <h4>A News reader</h4>
+        <ol>
+          <li>Opens BBC Web and sees the Editorial Spine's top story</li>
+          <li>Reads a health story</li>
+          <li>"Continue your journey" offers an explainer, an opposing viewpoint, and one "Something Different" pick</li>
+          <li>Taps "why am I seeing this" on the explainer, sees the reason, and follows the topic</li>
+        </ol>
+      </div>
+      <div class="journey">
+        <h4>A Sport fan</h4>
+        <ol>
+          <li>Opens BBC Sport and sees their followed team's live match banner</li>
+          <li>Taps into live text commentary</li>
+          <li>After the match, "Continue" offers post-match analysis, the season table, and the next fixture</li>
+          <li>Sets a fixture alert</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- 14 RISKS -->
+    <section class="doc" id="risks">
+      <div class="sec-head"><span class="num">14</span><h2>Risks</h2></div>
+      <ul class="risklist">
+        <li><span class="r-tag">Filter bubble creep</span><p>Even with safeguards, discovery modules can be quietly deprioritised if engagement metrics creep back in.</p></li>
+        <li><span class="r-tag">Complexity fatigue</span><p>Too many control dials could overwhelm rather than empower.</p></li>
+        <li><span class="r-tag">Trust erosion</span><p>Vague or templated "why am I seeing this" explanations undermine the entire premise.</p></li>
+        <li><span class="r-tag">Editorial resourcing</span><p>Hand-curated discovery content needs ongoing human effort, competing with automation cost savings.</p></li>
+        <li><span class="r-tag">Perceived bias</span><p>Personalisation touching political content risks accusations of institutional bias without rigorous balance logic.</p></li>
+      </ul>
+    </section>
+
+    <!-- 15/16 ROADMAP -->
+    <section class="doc" id="roadmap">
+      <div class="sec-head"><span class="num">15–16</span><h2>MVP and future vision</h2></div>
+      <div class="split">
+        <div>
+          <div class="tag">MVP</div>
+          <ul>
+            <li>Editorial Spine unchanged</li>
+            <li>One bounded "For You" module — homepage and article end</li>
+            <li>Templated "why am I seeing this" tag</li>
+            <li>Follow topics and teams (extends existing capability)</li>
+            <li>One daily editor-picked "Something Different" slot</li>
+            <li>Simple pause / reset toggle</li>
+          </ul>
+        </div>
+        <div>
+          <div class="tag">FUTURE VISION</div>
+          <ul>
+            <li>Full "Your BBC" transparency dashboard with granular data control</li>
+            <li>Dynamic discovery zones, cadence-adaptive without compromising editorial independence</li>
+            <li>Cross-format continuation journeys — article → podcast → live event → follow-up</li>
+            <li>AI-assisted, human-approved perspective-pairing at scale</li>
+            <li>A personalised, auditable "trust score" generated from public methodology</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONCEPTS -->
+    <div id="concepts"></div>
+    <section class="doc concepts-intro" style="border-bottom:none; padding-bottom:0;">
+      <div class="kicker">TEN DIRECTIONS</div>
+      <h2>Ten radically different personalisation concepts</h2>
+      <p>Each supports discovery, editorial judgement, trust, user control and natural continuation — for News, Sport, or both. None of them try to be TikTok, YouTube or Netflix.</p>
+    </section>
+
+    <section class="concepts-list" aria-label="Ten personalisation concepts">
+
+      <div class="concept" data-open="false">
+        <button class="concept-btn" aria-expanded="false">
+          <span class="c-num">01</span>
+          <span><span class="c-name">The Editorial Compass</span><span class="c-idea">A visible dial for the editorial / personal blend on any page — users can drag it themselves.</span></span>
+          <span class="c-plus">+</span>
+        </button>
+        <div class="concept-body">
+          <div class="concept-body-inner">
+            <div class="row"><h5>NEEDS SUPPORTED</h5><p>Control, trust, editorial balance, understanding why.</p></div>
+            <div class="row"><h5>PROBLEMS SOLVED</h5><p>Opaque algorithmic blending; user helplessness over personalisation intensity.</p></div>
+            <div class="row"><h5>BIGGEST RISK</h5><p>Can feel gimmicky or add UI complexity if not simplified well.</p></div>
+            <div class="row"><h5>MVP</h5><p>A static slider with three presets — editorial-heavy, balanced, personal-heavy.</p></div>
+            <div class="row"><h5>FUTURE</h5><p>A fully dynamic, per-section, remembered dial with live visual feedback as content shifts.</p></div>
+            <div class="why"><b>Why it feels distinctly BBC —</b> no commercial platform gives users literal control over the editorial-versus-personal ratio. It makes public-service values tangible.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="concept" data-open="false">
+        <button class="concept-btn" aria-expanded="false">
+          <span class="c-num">02</span>
+          <span><span class="c-name">Story Threads</span><span class="c-idea">Ongoing stories become followable, linear timelines — not scattered articles surfaced by relevance.</span></span>
+          <span class="c-plus">+</span>
+        </button>
+        <div class="concept-body">
+          <div class="concept-body-inner">
+            <div class="row"><h5>NEEDS SUPPORTED</h5><p>Continue journeys, relevant content, trust, staying informed.</p></div>
+            <div class="row"><h5>PROBLEMS SOLVED</h5><p>Users losing track of evolving stories; poor "what happened before this" context.</p></div>
+            <div class="row"><h5>BIGGEST RISK</h5><p>Editorial overhead to maintain threads consistently.</p></div>
+            <div class="row"><h5>MVP</h5><p>Manually curated threads for the top five to ten ongoing stories.</p></div>
+            <div class="row"><h5>FUTURE</h5><p>Semi-automated thread detection with editorial approval, cross-linked across News and Sport.</p></div>
+            <div class="why"><b>Why it feels distinctly BBC —</b> it prioritises comprehension over engagement-chasing, a fundamentally editorial structure rather than an algorithmic one.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="concept" data-open="false">
+        <button class="concept-btn" aria-expanded="false">
+          <span class="c-num">03</span>
+          <span><span class="c-name">The Discovery Ticket</span><span class="c-idea">A weekly set of editorially curated picks, chosen deliberately outside your interest profile.</span></span>
+          <span class="c-plus">+</span>
+        </button>
+        <div class="concept-body">
+          <div class="concept-body-inner">
+            <div class="row"><h5>NEEDS SUPPORTED</h5><p>Discovery beyond interests, editorial guidance, control — tickets can be skipped or muted.</p></div>
+            <div class="row"><h5>PROBLEMS SOLVED</h5><p>Discovery modules being scrolled past and ignored.</p></div>
+            <div class="row"><h5>BIGGEST RISK</h5><p>Gamification can feel un-BBC if overdesigned.</p></div>
+            <div class="row"><h5>MVP</h5><p>A simple weekly "three stories chosen for you by editors" module.</p></div>
+            <div class="row"><h5>FUTURE</h5><p>Picks based on genuine topic distance from known interests, with a visual map of what's been explored.</p></div>
+            <div class="why"><b>Why it feels distinctly BBC —</b> it treats discovery as a deliberate editorial gift, not an algorithmic accident.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="concept" data-open="false">
+        <button class="concept-btn" aria-expanded="false">
+          <span class="c-num">04</span>
+          <span><span class="c-name">Perspective Pairs</span><span class="c-idea">Contentious stories are shown side-by-side with an explicitly labelled alternate-perspective piece.</span></span>
+          <span class="c-plus">+</span>
+        </button>
+        <div class="concept-body">
+          <div class="concept-body-inner">
+            <div class="row"><h5>NEEDS SUPPORTED</h5><p>Range of viewpoints, trust, avoiding filter bubbles.</p></div>
+            <div class="row"><h5>PROBLEMS SOLVED</h5><p>Echo chambers forming around political or contentious topics.</p></div>
+            <div class="row"><h5>BIGGEST RISK</h5><p>False-balance risk on issues with clear factual answers — must be scoped to genuine debate, not settled science.</p></div>
+            <div class="row"><h5>MVP</h5><p>Manual pairing for major political stories.</p></div>
+            <div class="row"><h5>FUTURE</h5><p>A structured "perspective index" showing coverage breadth across the spectrum for any topic.</p></div>
+            <div class="why"><b>Why it feels distinctly BBC —</b> it directly operationalises the BBC's impartiality mandate as a UX feature, not a policy statement.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="concept" data-open="false">
+        <button class="concept-btn" aria-expanded="false">
+          <span class="c-num">05</span>
+          <span><span class="c-name">Ambient Explainability</span><span class="c-idea">Every personalised element carries a subtle, always-visible mark showing which layer it belongs to.</span></span>
+          <span class="c-plus">+</span>
+        </button>
+        <div class="concept-body">
+          <div class="concept-body-inner">
+            <div class="row"><h5>NEEDS SUPPORTED</h5><p>Trust, transparency, understanding recommendations.</p></div>
+            <div class="row"><h5>PROBLEMS SOLVED</h5><p>Users never noticing or using a hidden trust feature tucked away in a menu.</p></div>
+            <div class="row"><h5>BIGGEST RISK</h5><p>Visual clutter if the marking system isn't kept minimal.</p></div>
+            <div class="row"><h5>MVP</h5><p>A two-mark system — personalised versus editorial — with one tap for detail.</p></div>
+            <div class="row"><h5>FUTURE</h5><p>A full mark and icon taxonomy applied consistently across every content type and placement.</p></div>
+            <div class="why"><b>Why it feels distinctly BBC —</b> transparency becomes part of the visual grammar of the page, not an optional extra.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="concept" data-open="false">
+        <button class="concept-btn" aria-expanded="false">
+          <span class="c-num">06</span>
+          <span><span class="c-name">Interest Weather</span><span class="c-idea">A plain-language forecast of today's experience — "Mostly Politics, with a chance of Culture."</span></span>
+          <span class="c-plus">+</span>
+        </button>
+        <div class="concept-body">
+          <div class="concept-body-inner">
+            <div class="row"><h5>NEEDS SUPPORTED</h5><p>Transparency, control, trust.</p></div>
+            <div class="row"><h5>PROBLEMS SOLVED</h5><p>Users being surprised or confused by what appears on a given visit.</p></div>
+            <div class="row"><h5>BIGGEST RISK</h5><p>Can feel whimsical or inconsistent with the gravity of serious news days.</p></div>
+            <div class="row"><h5>MVP</h5><p>A small text summary at the top of the homepage.</p></div>
+            <div class="row"><h5>FUTURE</h5><p>A visual, interactive forecast users can adjust for the day ahead.</p></div>
+            <div class="why"><b>Why it feels distinctly BBC —</b> a warm, human framing device instead of an algorithmic dashboard.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="concept" data-open="false">
+        <button class="concept-btn" aria-expanded="false">
+          <span class="c-num">07</span>
+          <span><span class="c-name">Follow the Thread, Not the Topic</span><span class="c-idea">Narrow, meaningful threads to follow — "NHS funding debate" — instead of blunt categories.</span></span>
+          <span class="c-plus">+</span>
+        </button>
+        <div class="concept-body">
+          <div class="concept-body-inner">
+            <div class="row"><h5>NEEDS SUPPORTED</h5><p>Relevant content, recent context, avoiding overly broad personalisation.</p></div>
+            <div class="row"><h5>PROBLEMS SOLVED</h5><p>Topic-following that's too coarse to feel truly relevant.</p></div>
+            <div class="row"><h5>BIGGEST RISK</h5><p>Requires much finer editorial tagging infrastructure.</p></div>
+            <div class="row"><h5>MVP</h5><p>A pilot with ten to twenty hand-tagged threads within News.</p></div>
+            <div class="row"><h5>FUTURE</h5><p>User-suggested thread creation, editorially moderated before publishing.</p></div>
+            <div class="why"><b>Why it feels distinctly BBC —</b> precision in service of understanding, not precision in service of targeting.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="concept" data-open="false">
+        <button class="concept-btn" aria-expanded="false">
+          <span class="c-num">08</span>
+          <span><span class="c-name">The Editor's Note</span><span class="c-idea">A short, human, editor-signed note occasionally explains why a discovery pick matters.</span></span>
+          <span class="c-plus">+</span>
+        </button>
+        <div class="concept-body">
+          <div class="concept-body-inner">
+            <div class="row"><h5>NEEDS SUPPORTED</h5><p>Trust, editorial guidance, discovery.</p></div>
+            <div class="row"><h5>PROBLEMS SOLVED</h5><p>Algorithmic voice feeling cold or untrustworthy.</p></div>
+            <div class="row"><h5>BIGGEST RISK</h5><p>Editorial resourcing to write these regularly; risk of feeling performative if overused.</p></div>
+            <div class="row"><h5>MVP</h5><p>A weekly editor's note on the homepage discovery module.</p></div>
+            <div class="row"><h5>FUTURE</h5><p>Rotating editorial voices per section, building visible human accountability into personalisation.</p></div>
+            <div class="why"><b>Why it feels distinctly BBC —</b> it makes editorial trust personal and human rather than corporate — no other platform does this.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="concept" data-open="false">
+        <button class="concept-btn" aria-expanded="false">
+          <span class="c-num">09</span>
+          <span><span class="c-name">Season Pass</span><span class="c-idea">A persistent almanac for followed teams and competitions — fixtures, history, storylines, key players.</span></span>
+          <span class="c-plus">+</span>
+        </button>
+        <div class="concept-body">
+          <div class="concept-body-inner">
+            <div class="row"><h5>NEEDS SUPPORTED</h5><p>Continuity, relevance, deeper journeys.</p></div>
+            <div class="row"><h5>PROBLEMS SOLVED</h5><p>Sport fans currently piecing together fragmented content across separate match reports.</p></div>
+            <div class="row"><h5>BIGGEST RISK</h5><p>Complexity of maintaining rich structured data per team and competition.</p></div>
+            <div class="row"><h5>MVP</h5><p>A basic hub combining fixtures and recent articles for followed teams.</p></div>
+            <div class="row"><h5>FUTURE</h5><p>A rich narrative layer — rivalries, player arcs, historic context — auto-updated each season.</p></div>
+            <div class="why"><b>Why it feels distinctly BBC —</b> a companion built for a whole season, not a feed refreshed for a single session.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="concept" data-open="false">
+        <button class="concept-btn" aria-expanded="false">
+          <span class="c-num">10</span>
+          <span><span class="c-name">Trust Ledger</span><span class="c-idea">A running, visible log of exactly what's shaped your BBC experience this week — like a statement for your attention.</span></span>
+          <span class="c-plus">+</span>
+        </button>
+        <div class="concept-body">
+          <div class="concept-body-inner">
+            <div class="row"><h5>NEEDS SUPPORTED</h5><p>Trust, control, transparency, understanding.</p></div>
+            <div class="row"><h5>PROBLEMS SOLVED</h5><p>Personalisation that feels invisible and untraceable.</p></div>
+            <div class="row"><h5>BIGGEST RISK</h5><p>Can feel surveillance-adjacent if framed wrong — needs a careful, reassuring tone.</p></div>
+            <div class="row"><h5>MVP</h5><p>A simple weekly summary page.</p></div>
+            <div class="row"><h5>FUTURE</h5><p>A full interactive ledger with edit and delete controls per entry, tied into the Your BBC dashboard.</p></div>
+            <div class="why"><b>Why it feels distinctly BBC —</b> radical transparency as the trust mechanism — the opposite of opaque commercial personalisation.</div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <footer>
+      <div class="rule"></div>
+      A BBC Web personalisation strategy — product vision, experience principles and ten prototype concepts. Written for review and prototyping, not affiliated with or endorsed by the BBC.
+    </footer>
+
+  </main>
+</div>
+
+<script>
+  // Mobile nav toggle
+  const toggle = document.getElementById('navToggle');
+  const rail = document.getElementById('railNav');
+  toggle.addEventListener('click', () => {
+    const open = rail.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  rail.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      rail.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  // Hero dial
+  const dial = document.getElementById('dial');
+  const fillEd = document.getElementById('fillEd');
+  const fillPer = document.getElementById('fillPer');
+  const readout = document.getElementById('dialReadout');
+  function updateDial(v){
+    fillEd.style.width = v + '%';
+    fillPer.style.width = (100 - v) + '%';
+    let label, text;
+    if (v >= 80){ label='Editorial-heavy —'; text='mostly what our editors judge matters today.'; }
+    else if (v >= 55){ label='Balanced —'; text='mostly what matters today, with room for what matters to you.'; }
+    else if (v >= 30){ label='Personal-leaning —'; text='shaped more by your interests, still anchored to the day\\'s big stories.'; }
+    else { label='Personal-heavy —'; text='closely follows your interests. The Editorial Spine still never disappears.'; }
+    readout.innerHTML = '<b>' + label + '</b> ' + text;
+  }
+  dial.addEventListener('input', e => updateDial(e.target.value));
+  updateDial(70);
+
+  // Accordion for concepts
+  document.querySelectorAll('.concept').forEach(item => {
+    const btn = item.querySelector('.concept-btn');
+    const body = item.querySelector('.concept-body');
+    btn.addEventListener('click', () => {
+      const isOpen = item.getAttribute('data-open') === 'true';
+      // close others
+      document.querySelectorAll('.concept').forEach(other => {
+        if (other !== item){
+          other.setAttribute('data-open','false');
+          other.querySelector('.concept-btn').setAttribute('aria-expanded','false');
+          other.querySelector('.concept-body').style.maxHeight = null;
+        }
+      });
+      if (isOpen){
+        item.setAttribute('data-open','false');
+        btn.setAttribute('aria-expanded','false');
+        body.style.maxHeight = null;
+      } else {
+        item.setAttribute('data-open','true');
+        btn.setAttribute('aria-expanded','true');
+        body.style.maxHeight = body.scrollHeight + 'px';
+      }
+    });
+  });
+
+  // Scroll spy for nav
+  const sections = document.querySelectorAll('section.doc[id]');
+  const navLinks = document.querySelectorAll('nav.rail ol a');
+  const spy = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting){
+        navLinks.forEach(l => l.classList.remove('active'));
+        const link = document.querySelector('nav.rail a[href="#' + entry.target.id + '"]');
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-15% 0px -70% 0px' });
+  sections.forEach(s => spy.observe(s));
+</script>
+
+</body>
+</html>
